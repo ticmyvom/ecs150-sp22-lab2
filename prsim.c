@@ -23,7 +23,7 @@ int curWallTime = 0;
 // void run();
 // void rfile(char *fname, FILE *fp);
 
-// TODO: implement handlingReadyQueue and handlingIOQueue
+// TODO lower priority: implement handlingReadyQueue and handlingIOQueue
 void handlingReadyQueue(queue_t ready_queue)
 {
     printf("Entering and exiting ready queue function");
@@ -87,13 +87,13 @@ int main(int argc, char *argv[])
     //     return 1;
     // }
 
-    // TODO:
+    // TODO 2nd:
     // parse input file
     // check error, exit if found
     // create a struct for each line and add to an array of struct, whose size is the # of line in the file
 
     /* HARDCODING
-     * TODO: recycle to have a function to assist with creating a struct for a process
+     * TODO 1st: recycle to have a function to assist with creating a struct for a process
      *          see generateProcess in process.h
      *          this will helps with hardcoding until we can parse the file
      *
