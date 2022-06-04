@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "queue.h"
+#include <stdbool.h>
 
 // Based on process.c from the TA
 
@@ -35,13 +36,17 @@ struct resource
     int idle;           // total idle time
     double utilization; // busy / (busy + idle)
     int number;         // dispatches or IO time
-    double throughput;
+    double throughput;  // TODO
+    bool is_idle;
 };
 
 queue_t q;
 struct resource *sysCPU, *sysIO;
 
-// generate a pointer to a process and enqueue it.
+/*
+ * TODO: update with the new structure of process_from_input
+ * generate a pointer to a process and enqueue it.
+ */
 struct process_from_input *generateProcess(char *name, int totalCPU, int completeTime, int givenCPU, int BlockedIO, int doingIO)
 {
     struct process_from_input *tmp = (struct process_from_input *)malloc(sizeof(struct process_from_input));
@@ -54,7 +59,7 @@ struct process_from_input *generateProcess(char *name, int totalCPU, int complet
     return tmp;
 }
 
-void displayProcess(struct process_from_input *p)
+void displayProcess(struct process_from_input *p) // OPTIONAL/TODO: update stat to display process better
 {
     printf("name\ttotalCPU\tcompleteTime\tgivenCPU\tBlockedIO\tdoingIO\n");
     printf("%s\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", p->name, p->totalCPU, p->completeTime, p->givenCPU, p->BlockedIO, p->doingIO);
@@ -68,11 +73,13 @@ struct resource *buildResource(char *name, int busy, int idle, int number)
     tmp->idle = idle;
     tmp->utilization = (double)busy / (double)(busy + idle);
     tmp->number = number;
-    tmp->throughput = (double)number / (double)(busy + idle);
+    tmp->throughput = (double)number / (double)(busy + idle); // TODO: check if this is really throughput
+    tmp->is_idle = true;                                      // idle after init
     return tmp;
 }
 
-void displayResource(struct resource *res)
+// TODO: may need to edit this to print stat at the end
+void displayResource(struct resource *res) // OPTIONAL: edit to update struct
 {
     if (strcmp(res->name, "CPU"))
     {
