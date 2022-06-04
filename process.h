@@ -18,6 +18,7 @@ struct process_from_input
 
     /* doing things per tick */
     int priority; // according to the lab2 hints, no idea the purpose
+    bool to_be_blocked_for_IO;
     int time_til_completion;
     int time_til_IO;     // how to long to run on CPU until blocked for IO
     int time_left_on_IO; //
@@ -37,7 +38,7 @@ struct resource
     double utilization; // busy / (busy + idle)
     int number;         // dispatches or IO time
     double throughput;  // TODO
-    bool is_idle;
+    bool cur_running;   // is currently running
 };
 
 queue_t q;
@@ -74,7 +75,7 @@ struct resource *buildResource(char *name, int busy, int idle, int number)
     tmp->utilization = (double)busy / (double)(busy + idle);
     tmp->number = number;
     tmp->throughput = (double)number / (double)(busy + idle); // TODO: check if this is really throughput
-    tmp->is_idle = true;                                      // idle after init
+    tmp->cur_running = false;                                 // idle after init
     return tmp;
 }
 
