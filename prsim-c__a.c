@@ -70,7 +70,7 @@ int int_rng(char *flag, int remain_running_time)
   }
 }
 
-int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_queue, bool *cur_running)
+int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_queue)
 {
 
   if (queue_length(ready_queue) == 0)
@@ -81,29 +81,40 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
   }
 
   struct process_from_input *buffer = (struct process_from_input *)malloc(sizeof(struct process_from_input));
+  struct process_from_input *top_process = (struct process_from_input *)ready_queue->head->value;
 
-  if (cur_running && ((struct process_from_input *)ready_queue->head->value)->time_til_IO == 0)
+  if (sysCPU->cur_running && ((struct process_from_input *)ready_queue->head->value)->time_til_IO == 0)
   { // this means a process that previously did not block should run for the current clock cycle
     // [ready_queue -> head -> time_til_IO > 0 means it is going to block]
     printf("VIEW: CPU not idle, process won't block for IO here");
+    sysCPU->busy++;
+
     ((struct process_from_input *)ready_queue->head->value)->time_til_completion--;
+    top_process->givenCPU++;
 
     if (((struct process_from_input *)ready_queue->head->value)->time_til_completion == 0)
     { // it has reached 0 so it can exit the queue
       printf("VIEW: time_til_completion is 0. Not block for IO so exiting the queue. Leaving ready_queue function");
-      *cur_running = false;
+      sysCPU->cur_running = false;
       queue_dequeue(ready_queue, buffer);
+      top_process->completeTime = curWallTime;
+      // TODO: print stat for the current process
       return 0;
     }
   }
-  else if (cur_running)
+  else if (sysCPU->cur_running)
   { // this means that a process is running for a certain time period before blocking
-    printf("VIEW: CPU is running");
-    ((struct process_from_input *)ready_queue->head->value)->time_til_IO--;
+    printf("VIEW: CPU is running, process %s may block for CPU after this tick.\n", top_process->name);
+    sysCPU->busy++;
+    printf("VIEW: Process %s on CPU with remaining run time %d (out of %d). Decrementing it now.", top_process->name, top_process->time_til_completion, top_process->totalCPU);
+    top_process->time_til_IO--;
+    top_process->time_til_completion--;
+    top_process->givenCPU++;
 
-    if (((struct process_from_input *)ready_queue->head->value)->time_til_IO == 0)
+    if (top_process->time_til_IO == 0)
     { // it should now block (and so it gets put in IO queue)
-      *cur_running = false;
+      printf("VIEW:\tProcess will block for IO during the next tick. Now: transfer process %s to I/O queue and leave function for ready queue.\n", top_process->name);
+      sysCPU->cur_running = false;
       queue_enqueue(io_queue, ready_queue->head->value);
       queue_dequeue(ready_queue, buffer);
       return 1;
@@ -111,22 +122,25 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
   }
   else // CPU is idle
   {    // we will take a fresh process from ready queue
-    struct process_from_input *top_process = (struct process_from_input *)ready_queue->head->value;
+    // struct process_from_input *top_process = (struct process_from_input *)ready_queue->head->value; // moved to before the initial IF
+    printf("VIEW: CPU is idle and process %s is on the ready queue. Loading it onto CPU.\n", top_process->name);
+    sysCPU->idle++; // count for the previous tick; same with sysCPU->busy++
     bool block = false;
 
     if (top_process->time_til_completion > 2)
       block = to_block(top_process->blocking_prob);
 
-    // dequeue(ready_queue);
-
     if (block)
     {
       top_process->time_til_IO = int_rng("cpu", top_process->time_til_completion);
-      top_process->time_til_IO--; // not too sure about this, i'm assuming it will also run for the current clock cycle
+      printf("VIEW: Process %s on CPU with remaining run time %d (out of %d). Decrementing it now.", top_process->name, top_process->time_til_completion, top_process->totalCPU);
+      top_process->time_til_IO--;
+      top_process->time_til_completion--;
+      top_process->givenCPU++;
 
       if (top_process->time_til_IO != 0)
       {
-        *cur_running = true;
+        sysCPU->cur_running = true;
       }
       else
       { // if the time_till_IO was initially just 1
@@ -139,12 +153,13 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
     else
     {
       top_process->time_til_completion--;
-      *cur_running = true;
+      sysCPU->cur_running = true;
     }
     printf("Entering and exiting ready queue function");
   }
-}
+} // end handlingReadyQueue
 
+// TODO: compare this to my doc and update statistics
 void handlingIOQueue(queue_t ready_queue, queue_t io_queue)
 {
   if (queue_length(io_queue == 0))
