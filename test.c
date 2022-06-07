@@ -2,15 +2,16 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-
+#define min(a, b) \
+    ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
 // const char *filename = "file1";
 
 int main(int argc, char *argv[])
 {
-    if (1 < 0)
-        printf("true\n");
-    else
-        printf("false\n");
+    printf("value: %d\n", min(1, 0));
+    printf("the parenthesis (5 out of 7)\n");
     // char *filename = argv[1];
     // FILE *in_file = fopen(filename, "r");
     // if (!in_file)
