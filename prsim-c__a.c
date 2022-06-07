@@ -191,32 +191,76 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
 } // end handlingReadyQueue
 
 // TODO: compare this to my doc and update statistics
-void handlingIOQueue(queue_t ready_queue, queue_t io_queue)
+void handlingIOQueue(struct resource *sysIO, queue_t ready_queue, queue_t io_queue, int flag_fromCPU)
 {
   if (queue_length(io_queue == 0))
+  {
+    printf("I/O queue is empty. Exiting handlingIOQueue\n");
     return;
+  }
 
   struct process_from_input *buffer = (struct process_from_input *)malloc(sizeof(struct process_from_input));
   struct process_from_input *top_process = (struct process_from_input *)io_queue->head->value;
 
-  if (top_process->time_left_on_IO == -1 && top_process->time_til_completion > 0)
+  if (sysIO->cur_running == true)
   {
-    top_process->time_left_on_IO = int_rng("io", -1);
-  }
+    printf("VIEW: IO is running.\n");
+    sysIO->busy++;
+    top_process->time_left_on_IO--;
+    if (top_process->time_left_on_IO == 0)
+    {
+      sysIO->cur_running = false;
+      queue_dequeue(io_queue, buffer); // there maybe a problem when enqueuing and dequeuing
+      queue_enqueue(ready_queue, buffer);
+    }
+  } // end checking when IO is running
+
   else
   {
-    top_process->time_left_on_IO = 1;
-  }
+    printf("VIEW: IO is idle.\n");
+    sysIO->idle++;
+    if (top_process->name == ((struct process_from_input *)ready_queue->head->value)->name)
+    {
+      if (flag_fromCPU == 1)
+      {
+        printf("VIEW: flag is 1 and process %s will do IO in the next tick\n", top_process->name);
+        printf("Exiting handlingIOQueue\n");
+        return;
+      }
+    }
 
-  top_process->time_left_on_IO--;
+    else
+    {
+      printf("VIEW: setting IO to active. Moving process %s to I/O device\n", top_process->name);
+      sysIO->number++; // increment # of dispatch
+      if (top_process->time_til_completion == 0)
+      {
+        printf("VIEW: remaining run time 0, so I/O block length set to 1 time unit\n");
+        top_process->time_left_on_IO = 1;
+      }
+      else
+      {
+        top_process->time_left_on_IO = int_rng("io", -1);
+        top_process->doingIO = top_process->doingIO + top_process->time_left_on_IO; // update only once per IO determination
+      }
 
-  if (top_process->time_left_on_IO == 0)
-  {
-    queue_enqueue(ready_queue, io_queue->head->value);
-    queue_dequeue(io_queue, buffer);
-  }
+      // run for 1 tick on IO
+      top_process->time_left_on_IO--;
+      printf("VIEW: After doing IO for this tick, process %s has %d time units on I/O device\n", top_process->name, top_process->time_left_on_IO);
+
+      if (top_process->time_left_on_IO == 0)
+      {
+        sysIO->cur_running = false;
+        printf("Moving process %s off io_queue and into ready_queue. Exiting handlingIOQueue\n");
+        queue_dequeue(io_queue, buffer);
+        queue_enqueue(ready_queue, buffer);
+        return;
+      }
+    }
+  } // end checking when IO is idle
 
   printf("Exiting handlingIOQueue\n");
+  return;
 }
 
 // determine how many ticks to run for CPU or I/O
