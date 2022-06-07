@@ -23,8 +23,6 @@ int curWallTime = 0;
 // void run();
 // void rfile(char *fname, FILE *fp);
 
-// TODO lower priority: implement handlingReadyQueue and handlingIOQueue
-
 // determine whether to block for I/O
 bool to_block(float blocking_prob)
 {
@@ -199,25 +197,26 @@ void handlingIOQueue(queue_t ready_queue, queue_t io_queue)
     return;
 
   struct process_from_input *buffer = (struct process_from_input *)malloc(sizeof(struct process_from_input));
+  struct process_from_input *top_process = (struct process_from_input *)io_queue->head->value;
 
-  if (((struct process_from_input *)io_queue->head->value)->time_left_on_IO == -1 && ((struct process_from_input *)io_queue->head->value)->time_til_completion > 0)
+  if (top_process->time_left_on_IO == -1 && top_process->time_til_completion > 0)
   {
-    ((struct process_from_input *)io_queue->head->value)->time_left_on_IO = int_rng("io", -1);
+    top_process->time_left_on_IO = int_rng("io", -1);
   }
   else
   {
-    ((struct process_from_input *)io_queue->head->value)->time_left_on_IO = 1;
+    top_process->time_left_on_IO = 1;
   }
 
-  ((struct process_from_input *)io_queue->head->value)->time_left_on_IO--;
+  top_process->time_left_on_IO--;
 
-  if (((struct process_from_input *)io_queue->head->value)->time_left_on_IO == 0)
+  if (top_process->time_left_on_IO == 0)
   {
     queue_enqueue(ready_queue, io_queue->head->value);
     queue_dequeue(io_queue, buffer);
   }
 
-  printf("Entering and exiting IO queue function\n");
+  printf("Exiting handlingIOQueue\n");
 }
 
 // determine how many ticks to run for CPU or I/O
