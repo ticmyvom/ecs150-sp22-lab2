@@ -19,9 +19,9 @@ struct process_from_input
     /* doing things per tick */
     int priority; // according to the lab2 hints, no idea the purpose
     bool to_be_blocked_for_IO;
-    int time_til_completion;
-    int time_til_IO;     // how to long to run on CPU until blocked for IO
-    int time_left_on_IO; //
+    int time_til_completion; // remaining time on CPU
+    int time_til_IO;         // how to long to run on CPU until blocked for IO
+    int time_left_on_IO;     // remaining time on IO
 
     /* for stat printing at the end */
     int completeTime; // The wall clock time at which it was completed (this is the value of the counter, not the time of day)
@@ -37,7 +37,7 @@ struct resource
     int idle;           // total idle time
     double utilization; // busy / (busy + idle)
     int number;         // dispatches or IO time
-    double throughput;  // TODO
+    double throughput;  //
     bool cur_running;   // is currently running
 };
 
@@ -45,8 +45,7 @@ queue_t q;
 struct resource *sysCPU, *sysIO;
 
 /*
- * TODO: update with the new structure of process_from_input
- * generate a pointer to a process and enqueue it.
+ * TODO: update with the new structure of process_from_input.
  */
 struct process_from_input *generateProcess(char *name, int totalCPU, int completeTime, int givenCPU, int BlockedIO, int doingIO)
 {
@@ -55,12 +54,12 @@ struct process_from_input *generateProcess(char *name, int totalCPU, int complet
     tmp->totalCPU = totalCPU;
     tmp->completeTime = completeTime;
     tmp->givenCPU = givenCPU;
-    tmp->BlockedIO = BlockedIO;
+    tmp->BlockedIO = BlockedIO; // should be 0 by default
     tmp->doingIO = doingIO;
     return tmp;
 }
 
-void displayProcess(struct process_from_input *p) // OPTIONAL/TODO: update stat to display process better
+void displayProcess(struct process_from_input *p) // OPTIONAL/TODO: create another one with other stats for testing
 {
     printf("name\ttotalCPU\tcompleteTime\tgivenCPU\tBlockedIO\tdoingIO\n");
     printf("%s\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", p->name, p->totalCPU, p->completeTime, p->givenCPU, p->BlockedIO, p->doingIO);
@@ -80,7 +79,7 @@ struct resource *buildResource(char *name, int busy, int idle, int number)
 }
 
 // TODO: may need to edit this to print stat at the end
-void displayResource(struct resource *res) // OPTIONAL: edit to update struct
+void displayResource(struct resource *res) // OPTIONAL: edit to update struct (idk what i was thinking, ignore this comment)
 {
     if (strcmp(res->name, "CPU"))
     {
