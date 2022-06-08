@@ -93,8 +93,8 @@ int int_rng(char *flag, int remain_running_time)
  **/
 int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_queue, char *input_flag)
 {
-    printf("start of handlingRQ, HEAD ready queue: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
-    printf("BACK ready queue: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
+    // printf("start of handlingRQ, HEAD ready queue: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
+    // printf("BACK ready queue: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
     // input_flag is either fcfs or rr
     if (queue_length(ready_queue) == 0)
     {
@@ -143,12 +143,12 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
             // queue_enqueue(io_queue, ready_queue->head->value);
             queue_dequeue(ready_queue, (void **)&buffer);
             queue_enqueue(io_queue, buffer);
-            printf("enqueue %s to io, dequeue %s from ready\n", buffer->name, buffer->name);
-            printf(" top_process->time_til_IO == 0 HEAD of ready queue then: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
-            printf("BACK of ready queue then: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
-            printf("\n");
-            printf("HEAD io queue now: %s\n", ((struct process_from_input *)io_queue->head->value)->name);
-            printf("BACK io queue now: %s\n", ((struct process_from_input *)io_queue->back->value)->name);
+            // printf("enqueue %s to io, dequeue %s from ready\n", buffer->name, buffer->name);
+            // printf(" top_process->time_til_IO == 0 HEAD of ready queue then: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
+            // printf("BACK of ready queue then: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
+            // printf("\n");
+            // printf("HEAD io queue now: %s\n", ((struct process_from_input *)io_queue->head->value)->name);
+            // printf("BACK io queue now: %s\n", ((struct process_from_input *)io_queue->back->value)->name);
             printf("Leaving with flag 1\n");
             return 1;
         }
@@ -202,9 +202,9 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
                 // queue_enqueue(io_queue, (struct process_from_input *)ready_queue->head->value);
                 queue_dequeue(ready_queue, (void **)&buffer);
                 queue_enqueue(io_queue, buffer);
-                printf("enqueue %s to io, dequeue %s from ready\n", buffer->name, buffer->name);
-                printf("if the time_till_IO was initially just 1 HEAD of ready queue then: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
-                printf("BACK of ready queue then: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
+                // printf("enqueue %s to io, dequeue %s from ready\n", buffer->name, buffer->name);
+                // printf("if the time_till_IO was initially just 1 HEAD of ready queue then: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
+                // printf("BACK of ready queue then: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
 
                 printf("Leaving handlingCPUQueue with flag 1.\n");
 
@@ -248,8 +248,8 @@ void handlingIOQueue(struct resource *sysIO, queue_t ready_queue, queue_t io_que
             queue_dequeue(io_queue, (void **)&buffer); // there maybe a problem when enqueuing and dequeuing
             queue_enqueue(ready_queue, buffer);
             printf("enqueue %s to ready, dequeue from io\n", buffer->name);
-            printf("HEAD of ready queue then: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
-            printf("BACK of ready queue then: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
+            // printf("HEAD of ready queue then: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
+            // printf("BACK of ready queue then: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
             return;
         }
     } // end checking when IO is running
@@ -258,7 +258,8 @@ void handlingIOQueue(struct resource *sysIO, queue_t ready_queue, queue_t io_que
     {
         printf("VIEW: IO is idle.\n");
         sysIO->idle++;
-        printf("VIEW: head of CPU_queue is %s, head of IO_queue is %s\n", top_process->name, ((struct process_from_input *)ready_queue->head->value)->name);
+        // printf("VIEW: head of IO_queue is %s, head of CPU_queue is %s\n", top_process->name, ((struct process_from_input *)ready_queue->head->value)->name);
+        printf("VIEW: head of IO_queue is %s\n", top_process->name);
 
         if (flag_fromCPU == 1)
         {
