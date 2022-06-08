@@ -56,6 +56,7 @@ struct process_from_input *generateTestProcess(char *name, int totalCPU, double 
     tmp->time_til_completion = totalCPU;
     tmp->time_til_IO = 0;
     tmp->time_left_on_IO = 0;
+    tmp->to_be_blocked_for_IO = false;
     return tmp;
 }
 
@@ -110,7 +111,7 @@ void displayResource(struct resource *res) // OPTIONAL: edit to update struct (i
         printf("\n%s:\n", res->name);
         printf("Total time spent busy: %d\n", res->busy);
         printf("Total time spent idle: %d\n", res->idle);
-        printf("I/O device utilization: %.2f\n", res->utilization);
+        printf("I/O utilization: %.2f\n", res->utilization);
         printf("Number of dispatches: %d\n", res->number);
         printf("Overall throughput: %.2f\n", res->throughput);
     }

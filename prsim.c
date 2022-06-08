@@ -190,6 +190,7 @@ int handlingReadyQueue(struct resource *sysCPU, struct resource *sysIO, queue_t 
 
         if (block)
         {
+            top_process->to_be_blocked_for_IO = true;
             printf("VIEW: Process wil block for I/O\n");
             top_process->BlockedIO++; // set this once
             top_process->time_til_IO = int_rng(input_flag, top_process->time_til_completion);
@@ -213,14 +214,18 @@ int handlingReadyQueue(struct resource *sysCPU, struct resource *sysIO, queue_t 
                 // printf("if the time_till_IO was initially just 1 HEAD of ready queue then: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
                 // printf("BACK of ready queue then: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
 
-                printf("Leaving handlingCPUQueue with flag 1.\n");
+                struct process_from_input *top_io = (struct process_from_input *)io_queue->head->value;
+                if (top_io->name != top_process->name)
+                    top_io->to_be_blocked_for_IO = false; // hande the case when io couldn't run due to flag 1 on both ticks, even tho the processes are different on the queues now
 
+                printf("Leaving handlingCPUQueue with flag 1.\n");
                 return 1; // so that IO won't run it at the same tick
             }
         }
         else
         {
             printf("Process will not block for I/O\n");
+            top_process->to_be_blocked_for_IO = false;
             top_process->time_til_completion--; // if time_til_completion is 0 after this, it will terminate during the next tick
             sysCPU->cur_running = true;
         }
@@ -268,7 +273,7 @@ void handlingIOQueue(struct resource *sysIO, queue_t ready_queue, queue_t io_que
         // printf("VIEW: head of IO_queue is %s, head of CPU_queue is %s\n", top_process->name, ((struct process_from_input *)ready_queue->head->value)->name);
         printf("VIEW: head of IO_queue is %s\n", top_process->name);
 
-        if (flag_fromCPU == 1)
+        if (flag_fromCPU == 1 && top_process->to_be_blocked_for_IO == true)
         {
             printf("VIEW: flag is 1 and process %s will do IO in the next tick\n", top_process->name);
             printf("Exiting handlingIOQueue\n");
@@ -332,32 +337,23 @@ int main(int argc, char *argv[])
      *
      */
 
-    // editor
-    struct process_from_input *p1 = generateTestProcess("editor", 5, 0.87);
-    struct process_from_input *p2 = generateTestProcess("compiler", 40, 0.53);
-    struct process_from_input *p3 = generateTestProcess("adventure", 30, 0.72);
-    // p1->name = "editor";
-    // p1->totalCPU = 5;
-    // p1->blocking_prob = 0.87;
-    // p1->time_til_completion = 5;
+    // file1
+    // struct process_from_input *p1 = generateTestProcess("editor", 5, 0.87);
+    // struct process_from_input *p2 = generateTestProcess("compiler", 40, 0.53);
+    // struct process_from_input *p3 = generateTestProcess("adventure", 30, 0.72);
 
-    // compiler
-    // struct process_from_input *p2 = (struct process_from_input *)malloc(sizeof(struct process_from_input));
-    // p2->name = "compiler";
-    // p2->totalCPU = 40;
-    // p2->blocking_prob = 0.53;
-    // p2->time_til_completion = 40;
-    // p2->time_til_IO = 0;
-    // p2->time_left_on_IO = 0;
+    // file2
+    // struct process_from_input *p1 = generateTestProcess("editor", 3, 0.87);
+    // struct process_from_input *p2 = generateTestProcess("compiler", 5, 0.53);
+    // struct process_from_input *p3 = generateTestProcess("adventure", 2, 0.72);
 
-    // adventure
-    // struct process_from_input *p3 = (struct process_from_input *)malloc(sizeof(struct process_from_input));
-    // p3->name = "adventure";
-    // p3->totalCPU = 30;
-    // p3->blocking_prob = 0.72;
-    // p3->time_til_completion = 30;
-    // p3->time_til_IO = 0;
-    // p3->time_left_on_IO = 0;
+    // file3
+    // struct process_from_input *p1 = generateTestProcess("editor", 3, 0.87);
+    // struct process_from_input *p2 = generateTestProcess("xyzzy", 2, 0.10);
+
+    // file4
+    struct process_from_input *p1 = generateTestProcess("biggie", 20, 0.99);
+    struct process_from_input *p2 = generateTestProcess("nextone", 10, 0.99);
 
     struct process_from_input *ptr; // just to test enqueue, dequeue
     queue_t ready_queue, io_queue;
@@ -366,7 +362,7 @@ int main(int argc, char *argv[])
 
     queue_enqueue(ready_queue, p1);
     queue_enqueue(ready_queue, p2);
-    queue_enqueue(ready_queue, p3);
+    // queue_enqueue(ready_queue, p3);
 
     // queue_dequeue(ready_queue, (void **)&ptr);
     // printf("name: %s\n", ptr->name);
