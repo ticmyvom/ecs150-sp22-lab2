@@ -47,6 +47,18 @@ struct resource *sysCPU, *sysIO;
 /*
  * TODO: update with the new structure of process_from_input.
  */
+struct process_from_input *generateTestProcess(char *name, int totalCPU, double blocking_prob)
+{
+    struct process_from_input *tmp = (struct process_from_input *)malloc(sizeof(struct process_from_input));
+    tmp->name = name;
+    tmp->totalCPU = totalCPU;
+    tmp->blocking_prob = blocking_prob;
+    tmp->time_til_completion = totalCPU;
+    tmp->time_til_IO = 0;
+    tmp->time_left_on_IO = 0;
+    return tmp;
+}
+
 struct process_from_input *generateProcess(char *name, int totalCPU, int completeTime, int givenCPU, int BlockedIO, int doingIO)
 {
     struct process_from_input *tmp = (struct process_from_input *)malloc(sizeof(struct process_from_input));
@@ -61,9 +73,9 @@ struct process_from_input *generateProcess(char *name, int totalCPU, int complet
 
 void displayProcess(struct process_from_input *p)
 {
-    // from old process.c
-    // printf("name\ttotalCPU\tcompleteTime\tgivenCPU\tBlockedIO\tdoingIO\n");
-    // printf("%s\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", p->name, p->totalCPU, p->completeTime, p->givenCPU, p->BlockedIO, p->doingIO);
+    // printf("Comment these 3 lines\n");
+    // printf("name\ttotalCPU\tblocking_prob\n");
+    // printf("%s\t%d\t\t%f\n", p->name, p->totalCPU, p->blocking_prob);
 
     printf("%-10s %6d     %6d    %6d    %6d    %6d\n", p->name, p->totalCPU, p->completeTime, p->givenCPU, p->BlockedIO, p->doingIO);
 }
@@ -84,22 +96,22 @@ struct resource *buildResource(char *name, int busy, int idle, int number)
 // TODO: may need to edit this to print stat at the end
 void displayResource(struct resource *res) // OPTIONAL: edit to update struct (idk what i was thinking, ignore this comment)
 {
-    if (strcmp(res->name, "CPU"))
+    if (res->name == "CPU")
     {
-        printf("%s:\n", res->name);
+        printf("\n%s:\n", res->name);
         printf("Total time spent busy: %d\n", res->busy);
         printf("Total time spent idle: %d\n", res->idle);
         printf("CPU utilization: %.2f\n", res->utilization);
         printf("Number of dispatches: %d\n", res->number);
         printf("Overall throughput: %.2f\n", res->throughput);
     }
-    else if (strcmp(res->name, "IO"))
+    else if (res->name == "IO")
     {
-        printf("%s:\n", res->name);
+        printf("\n%s:\n", res->name);
         printf("Total time spent busy: %d\n", res->busy);
         printf("Total time spent idle: %d\n", res->idle);
         printf("I/O device utilization: %.2f\n", res->utilization);
-        printf("Number of times I/O was started: %d\n", res->number);
+        printf("Number of dispatches: %d\n", res->number);
         printf("Overall throughput: %.2f\n", res->throughput);
     }
     else
