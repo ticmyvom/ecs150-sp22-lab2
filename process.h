@@ -59,10 +59,13 @@ struct process_from_input *generateProcess(char *name, int totalCPU, int complet
     return tmp;
 }
 
-void displayProcess(struct process_from_input *p) // OPTIONAL/TODO: create another one with other stats for testing
+void displayProcess(struct process_from_input *p)
 {
-    printf("name\ttotalCPU\tcompleteTime\tgivenCPU\tBlockedIO\tdoingIO\n");
-    printf("%s\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", p->name, p->totalCPU, p->completeTime, p->givenCPU, p->BlockedIO, p->doingIO);
+    // from old process.c
+    // printf("name\ttotalCPU\tcompleteTime\tgivenCPU\tBlockedIO\tdoingIO\n");
+    // printf("%s\t%d\t\t%d\t\t%d\t\t%d\t\t%d\n", p->name, p->totalCPU, p->completeTime, p->givenCPU, p->BlockedIO, p->doingIO);
+
+    printf("%-10s %6d     %6d    %6d    %6d    %6d\n", p->name, p->totalCPU, p->completeTime, p->givenCPU, p->BlockedIO, p->doingIO);
 }
 
 struct resource *buildResource(char *name, int busy, int idle, int number)
