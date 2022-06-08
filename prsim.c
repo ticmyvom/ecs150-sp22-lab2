@@ -85,13 +85,13 @@ int int_rng(char *flag, int remain_running_time)
 
 /**
  *
- * @param sysCPU, ready_queue, io_queue, input_flag (whether -r or -f)
+ * @param sysCPU, sysIO, ready_queue, io_queue, input_flag (whether -r or -f)
  * @return flag_from_cpu.
  *      0: handlingIOQueue can proceed normally
  *      1: indicate that we just enqueue a process to io_queue. handlingIOQueue should not run that process in the same tick
  *
  **/
-int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_queue, char *input_flag)
+int handlingReadyQueue(struct resource *sysCPU, struct resource *sysIO, queue_t ready_queue, queue_t io_queue, char *input_flag)
 {
     // printf("start of handlingRQ, HEAD ready queue: %s\n", ((struct process_from_input *)ready_queue->head->value)->name);
     // printf("BACK ready queue: %s\n", ((struct process_from_input *)ready_queue->back->value)->name);
@@ -111,7 +111,7 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
         // [ready_queue -> head -> time_til_IO > 0 means it is going to block]
         printf("VIEW: CPU not idle, process %s won't block for IO here\n", top_process->name);
         printf("VIEW: Process %s on CPU with remaining run time %d (out of %d).\n", top_process->name, top_process->time_til_completion, top_process->totalCPU);
-        sysCPU->busy++;
+        // sysCPU->busy++;
 
         if (((struct process_from_input *)ready_queue->head->value)->time_til_completion <= 0)
         { // it has reached 0 either just now or previous tick => exit the queue
@@ -121,6 +121,9 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
             top_process->completeTime = curWallTime;
             // TODO: print stat for the current process
             displayProcess(top_process);
+            // update the resources' stat after we have a complete stat on a process
+            sysCPU->busy = sysCPU->busy + top_process->totalCPU;
+            sysIO->busy = sysIO->busy + top_process->doingIO;
             free(buffer);
             return 0;
         }
@@ -130,7 +133,7 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
     else if (sysCPU->cur_running)
     { // this means that a process is running for a certain time period before blocking
         printf("VIEW: CPU is running, process %s may block for CPU after this tick.\n", top_process->name);
-        sysCPU->busy++;
+        // sysCPU->busy++;
         printf("VIEW: Process %s on CPU with remaining run time %d (out of %d). Decrementing it now.\n", top_process->name, top_process->time_til_completion, top_process->totalCPU);
 
         top_process->time_til_IO--;
@@ -160,7 +163,7 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
 
         // struct process_from_input *top_process = (struct process_from_input *)ready_queue->head->value; // moved to before the initial IF
         printf("VIEW: CPU is idle and process %s is on the ready queue. Loading it onto CPU.\n", top_process->name);
-        sysCPU->idle++; // count for the previous tick; same with sysCPU->busy++
+        // sysCPU->idle++; // count for the previous tick; same with sysCPU->busy++
         bool block = false;
         top_process->givenCPU++;
 
@@ -179,6 +182,9 @@ int handlingReadyQueue(struct resource *sysCPU, queue_t ready_queue, queue_t io_
             top_process->completeTime = curWallTime;
             // TODO: print stat for the current process as soon as it terminates
             displayProcess(top_process);
+            // update the resources' stat after we have a complete stat on a process
+            sysCPU->busy = sysCPU->busy + top_process->totalCPU;
+            sysIO->busy = sysIO->busy + top_process->doingIO;
             return 0;
         }
 
@@ -238,7 +244,7 @@ void handlingIOQueue(struct resource *sysIO, queue_t ready_queue, queue_t io_que
     if (sysIO->cur_running == true)
     {
         printf("VIEW: IO is running.\n");
-        sysIO->busy++;
+        // sysIO->busy++;
         top_process->time_left_on_IO--;
         printf("VIEW: After doing IO for this tick, process %s has %d time units on I/O device\n", top_process->name, top_process->time_left_on_IO);
 
@@ -327,31 +333,31 @@ int main(int argc, char *argv[])
      */
 
     // editor
-    struct process_from_input *p1 = (struct process_from_input *)malloc(sizeof(struct process_from_input));
-    p1->name = "editor";
-    p1->totalCPU = 5;
-    p1->blocking_prob = 0.87;
-    p1->time_til_completion = 5;
-    p1->time_til_IO = 0;
-    p1->time_left_on_IO = 0;
+    struct process_from_input *p1 = generateTestProcess("editor", 5, 0.87);
+    struct process_from_input *p2 = generateTestProcess("compiler", 40, 0.53);
+    struct process_from_input *p3 = generateTestProcess("adventure", 30, 0.72);
+    // p1->name = "editor";
+    // p1->totalCPU = 5;
+    // p1->blocking_prob = 0.87;
+    // p1->time_til_completion = 5;
 
     // compiler
-    struct process_from_input *p2 = (struct process_from_input *)malloc(sizeof(struct process_from_input));
-    p2->name = "compiler";
-    p2->totalCPU = 40;
-    p2->blocking_prob = 0.53;
-    p2->time_til_completion = 40;
-    p2->time_til_IO = 0;
-    p2->time_left_on_IO = 0;
+    // struct process_from_input *p2 = (struct process_from_input *)malloc(sizeof(struct process_from_input));
+    // p2->name = "compiler";
+    // p2->totalCPU = 40;
+    // p2->blocking_prob = 0.53;
+    // p2->time_til_completion = 40;
+    // p2->time_til_IO = 0;
+    // p2->time_left_on_IO = 0;
 
     // adventure
-    struct process_from_input *p3 = (struct process_from_input *)malloc(sizeof(struct process_from_input));
-    p3->name = "adventure";
-    p3->totalCPU = 30;
-    p3->blocking_prob = 0.72;
-    p3->time_til_completion = 30;
-    p3->time_til_IO = 0;
-    p3->time_left_on_IO = 0;
+    // struct process_from_input *p3 = (struct process_from_input *)malloc(sizeof(struct process_from_input));
+    // p3->name = "adventure";
+    // p3->totalCPU = 30;
+    // p3->blocking_prob = 0.72;
+    // p3->time_til_completion = 30;
+    // p3->time_til_IO = 0;
+    // p3->time_left_on_IO = 0;
 
     struct process_from_input *ptr; // just to test enqueue, dequeue
     queue_t ready_queue, io_queue;
@@ -364,8 +370,9 @@ int main(int argc, char *argv[])
 
     // queue_dequeue(ready_queue, (void **)&ptr);
     // printf("name: %s\n", ptr->name);
+    int processes_count = queue_length(ready_queue);
+    printf("queue length: %d\n", processes_count);
 
-    printf("queue length: %d\n", queue_length(ready_queue));
     (void)srandom(12345);
 
     struct resource *sysCPU, *sysIO;
@@ -382,16 +389,23 @@ int main(int argc, char *argv[])
         curWallTime++;
         printf("TICK = %d |||||||||||||||||||||||||||||||||||||||||||||||||||||||\n", curWallTime);
         printf("RUNNING READY QUEUE --------------------------------------\n");
-        int flag_from_cpu = handlingReadyQueue(sysCPU, ready_queue, io_queue, input_flag);
+        int flag_from_cpu = handlingReadyQueue(sysCPU, sysIO, ready_queue, io_queue, input_flag);
         printf("RUNNING I/O QUEUE --------------------------------------\n");
         handlingIOQueue(sysIO, ready_queue, io_queue, flag_from_cpu);
-        }
+    }
 
     printf("\nSystem:\n");
     printf("The wall clock time at which the simulation finished: %d\n", curWallTime);
 
     // TODO: print stat of sysCPU and sysIO, formulas in buildResource of process.h
+    sysCPU->idle = curWallTime - sysCPU->busy;
+    sysCPU->utilization = (double)sysCPU->busy / (double)(sysCPU->busy + sysCPU->idle);
+    sysCPU->throughput = (double)(processes_count) / (double)(curWallTime);
     displayResource(sysCPU);
+
+    sysIO->idle = curWallTime - sysIO->busy;
+    sysIO->utilization = (double)sysIO->busy / (double)(sysIO->busy + sysIO->idle);
+    sysIO->throughput = (double)(processes_count) / (double)(curWallTime);
     displayResource(sysIO);
 
     // LATER:
